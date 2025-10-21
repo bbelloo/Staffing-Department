@@ -1,300 +1,265 @@
-document.addEventListener("DOMContentLoaded", () => {
-  const boardContainer = document.getElementById("board-container");
-  const addListBtn = document.getElementById("add-list-btn");
+// -------------------------------
+// Ella's Last Brain Cell - Script
+// -------------------------------
 
-  // Modal elements
-  const modal = document.getElementById("card-modal");
-  const modalTitle = document.getElementById("modal-title");
-  const modalDesc = document.getElementById("modal-desc");
-  const modalLabel = document.getElementById("modal-label");
-  const closeModal = document.getElementById("close-modal");
-  const modalArchive = document.getElementById("modal-archive");
-  const modalDelete = document.getElementById("modal-delete");
-  const modalSave = document.getElementById("modal-save");
-  const historyList = document.getElementById("history-list");
-  let currentCard = null;
+// DOM Elements
+const boardContainer = document.getElementById('board-container');
+const addListBtn = document.getElementById('add-list-btn');
+const cardModal = document.getElementById('card-modal');
+const closeModal = document.getElementById('close-modal');
+const modalTitle = document.getElementById('modal-title');
+const modalDesc = document.getElementById('modal-desc');
+const modalLabel = document.getElementById('modal-label');
+const modalSave = document.getElementById('modal-save');
+const modalArchive = document.getElementById('modal-archive');
+const modalDelete = document.getElementById('modal-delete');
+const historyList = document.getElementById('history-list');
+const archivePanel = document.getElementById('archive-panel');
+const openArchive = document.getElementById('open-archive');
+const closeArchive = document.getElementById('close-archive');
+const archivedCardsContainer = document.getElementById('archived-cards');
 
-  // Archive Panel
-  const archivePanel = document.getElementById("archive-panel");
-  const openArchiveBtn = document.getElementById("open-archive");
-  const closeArchiveBtn = document.getElementById("close-archive");
-  const archivedCardsContainer = document.getElementById("archived-cards");
+// Data
+let boardData = JSON.parse(localStorage.getItem('boardData')) || [];
+let archivedCards = JSON.parse(localStorage.getItem('archivedCards')) || [];
+let currentEdit = null; // {listIndex, cardIndex}
 
-  // Load board from localStorage
-  loadBoard();
+// -------------------------------
+// Utility Functions
+// -------------------------------
+function saveData() {
+  localStorage.setItem('boardData', JSON.stringify(boardData));
+  localStorage.setItem('archivedCards', JSON.stringify(archivedCards));
+}
 
-  // Add new list
-  addListBtn.addEventListener("click", () => {
-    createList();
-    saveBoard();
-  });
+function createCardElement(card, listIndex, cardIndex) {
+  const cardEl = document.createElement('div');
+  cardEl.classList.add('card');
 
-  // Functions
-  function createList(title = "New List") {
-    const list = document.createElement("div");
-    list.className = "list";
+  // Title
+  const titleEl = document.createElement('div');
+  titleEl.classList.add('card-title');
+  titleEl.textContent = card.title || 'Untitled Card';
+  cardEl.appendChild(titleEl);
 
-    // Header
-    const header = document.createElement("div");
-    header.className = "list-header";
+  // Label
+  if(card.label){
+    const labelEl = document.createElement('div');
+    labelEl.classList.add('label', card.label);
+    labelEl.textContent = card.label;
+    cardEl.appendChild(labelEl);
+  }
 
-    const h3 = document.createElement("h3");
-    h3.innerText = title;
+  // Hover preview for description
+  if(card.desc){
+    const descEl = document.createElement('div');
+    descEl.classList.add('card-desc');
+    descEl.textContent = card.desc;
+    cardEl.appendChild(descEl);
+  }
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.innerText = "×";
-    deleteBtn.onclick = () => {
-      if (confirm("Delete this list?")) {
-        list.remove();
-        saveBoard();
-      }
-    };
+  // Card Buttons
+  const btnContainer = document.createElement('div');
+  btnContainer.classList.add('card-buttons');
 
-    header.append(h3, deleteBtn);
-    list.appendChild(header);
+  const editBtn = document.createElement('button');
+  editBtn.textContent = 'Edit';
+  editBtn.addEventListener('click', () => openCardModal(listIndex, cardIndex));
 
-    // Cards container
-    const cardsContainer = document.createElement("div");
-    cardsContainer.className = "cards";
-    list.appendChild(cardsContainer);
+  const archiveBtn = document.createElement('button');
+  archiveBtn.textContent = 'Archive';
+  archiveBtn.addEventListener('click', () => archiveCard(listIndex, cardIndex));
 
-    // Inline add card input
-    const addCardInput = document.createElement("input");
-    addCardInput.className = "add-card-input";
-    addCardInput.placeholder = "+ Add a card...";
-    addCardInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter" && addCardInput.value.trim() !== "") {
-        const card = createCard(addCardInput.value.trim());
-        cardsContainer.appendChild(card);
-        addCardInput.value = "";
-        saveBoard();
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = 'Delete';
+  deleteBtn.addEventListener('click', () => deleteCard(listIndex, cardIndex));
+
+  btnContainer.append(editBtn, archiveBtn, deleteBtn);
+  cardEl.appendChild(btnContainer);
+
+  return cardEl;
+}
+
+function renderBoard() {
+  boardContainer.innerHTML = '';
+  boardData.forEach((list, listIndex) => {
+    const listEl = document.createElement('div');
+    listEl.classList.add('list');
+
+    // List Header (editable)
+    const header = document.createElement('div');
+    header.classList.add('list-header');
+    const titleEl = document.createElement('h3');
+    titleEl.textContent = list.name || 'Untitled List';
+    titleEl.contentEditable = true;
+    titleEl.addEventListener('blur', () => {
+      list.name = titleEl.textContent.trim();
+      saveData();
+    });
+    header.appendChild(titleEl);
+
+    const deleteListBtn = document.createElement('button');
+    deleteListBtn.textContent = '×';
+    deleteListBtn.addEventListener('click', () => deleteList(listIndex));
+    header.appendChild(deleteListBtn);
+
+    listEl.appendChild(header);
+
+    // Cards
+    const cardsEl = document.createElement('div');
+    cardsEl.classList.add('cards');
+    list.cards.forEach((card, cardIndex) => {
+      cardsEl.appendChild(createCardElement(card, listIndex, cardIndex));
+    });
+
+    // Add Card Input
+    const addCardInput = document.createElement('input');
+    addCardInput.classList.add('add-card-input');
+    addCardInput.placeholder = '+ Add a card';
+    addCardInput.addEventListener('keypress', (e) => {
+      if(e.key === 'Enter' && addCardInput.value.trim() !== ''){
+        list.cards.push({title: addCardInput.value.trim(), desc:'', label:'', history:[]});
+        addCardInput.value = '';
+        saveData();
+        renderBoard();
       }
     });
-    list.appendChild(addCardInput);
+
+    listEl.appendChild(cardsEl);
+    listEl.appendChild(addCardInput);
+
+    // Append list
+    boardContainer.appendChild(listEl);
 
     // Make cards sortable
-    new Sortable(cardsContainer, {
-      group: "shared-cards",
-      animation: 200,
-      onEnd: saveBoard
+    new Sortable(cardsEl, {
+      group: 'shared',
+      animation: 150,
+      onEnd: saveData
     });
+  });
 
-    // Add list to board
-    boardContainer.appendChild(list);
+  // Make lists sortable
+  new Sortable(boardContainer, {
+    animation: 150,
+    onEnd: saveData
+  });
+}
 
-    // Make lists sortable horizontally
-    new Sortable(boardContainer, {
-      animation: 200,
-      onEnd: saveBoard
-    });
+// -------------------------------
+// Card Modal
+// -------------------------------
+function openCardModal(listIndex, cardIndex){
+  currentEdit = {listIndex, cardIndex};
+  const card = boardData[listIndex].cards[cardIndex];
+  modalTitle.value = card.title || '';
+  modalDesc.value = card.desc || '';
+  modalLabel.value = card.label || '';
+  renderHistory(card);
+  cardModal.style.display = 'flex';
+}
 
-    return list;
-  }
+function closeCardModal(){
+  currentEdit = null;
+  cardModal.style.display = 'none';
+}
 
-  function createCard(title, desc = "", label = "", history = []) {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.dataset.archived = "false";
-    card.dataset.history = JSON.stringify(history);
+function renderHistory(card){
+  historyList.innerHTML = '';
+  if(!card.history) card.history = [];
+  card.history.forEach(item=>{
+    const li = document.createElement('li');
+    li.textContent = item;
+    historyList.appendChild(li);
+  });
+}
 
-    // Label badge
-    let labelBadge = null;
-    if (label) {
-      labelBadge = document.createElement("span");
-      labelBadge.className = `label ${label}`;
-      labelBadge.innerText = label;
-      card.appendChild(labelBadge);
-    }
+// -------------------------------
+// Card Actions
+// -------------------------------
+modalSave.addEventListener('click', ()=>{
+  if(currentEdit){
+    const {listIndex, cardIndex} = currentEdit;
+    const card = boardData[listIndex].cards[cardIndex];
 
-    const cardTitle = document.createElement("div");
-    cardTitle.className = "card-title";
-    cardTitle.innerText = title;
+    // Save only label changes and description
+    if(modalDesc.value !== card.desc) card.history.push(`Desc updated: ${modalDesc.value}`);
+    if(modalLabel.value !== card.label) card.history.push(`Label updated: ${modalLabel.value}`);
 
-    const cardDesc = document.createElement("div");
-    cardDesc.className = "card-desc";
-    cardDesc.innerText = desc;
-
-    // Label selector inline
-    const labelSelector = document.createElement("select");
-    ["","red","green","blue","yellow","purple"].forEach(c=>{
-      const opt = document.createElement("option");
-      opt.value = c;
-      opt.innerText = c === "" ? "No label" : c;
-      if (c === label) opt.selected = true;
-      labelSelector.appendChild(opt);
-    });
-    labelSelector.addEventListener("change", ()=>{
-      if(labelBadge) labelBadge.remove();
-      if(labelSelector.value){
-        labelBadge = document.createElement("span");
-        labelBadge.className = `label ${labelSelector.value}`;
-        labelBadge.innerText = labelSelector.value;
-        card.insertBefore(labelBadge, cardTitle);
-      } else {
-        labelBadge = null;
-      }
-      saveBoard();
-    });
-
-    // Card buttons
-    const buttons = document.createElement("div");
-    buttons.className = "card-buttons";
-    const editBtn = document.createElement("button"); editBtn.innerText="Edit";
-    const archiveBtn = document.createElement("button"); archiveBtn.innerText="Archive";
-    const deleteBtn = document.createElement("button"); deleteBtn.innerText="Delete";
-
-    editBtn.onclick = (e)=>{
-      e.stopPropagation();
-      openModal(card);
-    };
-    archiveBtn.onclick = (e)=>{
-      e.stopPropagation();
-      archiveCard(card);
-    };
-    deleteBtn.onclick = (e)=>{
-      e.stopPropagation();
-      if(confirm("Delete permanently?")){ card.remove(); saveBoard(); }
-    };
-
-    buttons.append(editBtn, archiveBtn, deleteBtn);
-
-    card.append(labelBadge, cardTitle, cardDesc, labelSelector, buttons);
-
-    // Click card to open modal
-    card.addEventListener("click", (e)=>{
-      if(!e.target.closest("button") && !e.target.closest("select")){
-        openModal(card);
-      }
-    });
-
-    return card;
-  }
-
-  // Modal functions
-  function openModal(card){
-    currentCard = card;
-    modal.style.display = "flex";
-    modalTitle.value = card.querySelector(".card-title").innerText;
-    modalDesc.value = card.querySelector(".card-desc").innerText;
-    const labelEl = card.querySelector(".label");
-    modalLabel.value = labelEl ? labelEl.className.split(" ")[1] : "";
-
-    // Load edit history
-    historyList.innerHTML = "";
-    const hist = JSON.parse(card.dataset.history || "[]");
-    hist.forEach(entry=>{
-      const li = document.createElement("li");
-      li.innerText = entry;
-      historyList.appendChild(li);
-    });
-  }
-
-  closeModal.onclick = ()=>{ modal.style.display="none"; };
-  window.onclick = e=>{ if(e.target===modal) modal.style.display="none"; };
-
-  modalSave.onclick = ()=>{
-    const oldTitle = currentCard.querySelector(".card-title").innerText;
-    const oldDesc = currentCard.querySelector(".card-desc").innerText;
-    const oldLabel = currentCard.querySelector(".label")?.className.split(" ")[1] || "";
-
-    const newTitle = modalTitle.value;
-    const newDesc = modalDesc.value;
-    const newLabel = modalLabel.value;
-
-    // Update card content
-    currentCard.querySelector(".card-title").innerText = newTitle;
-    currentCard.querySelector(".card-desc").innerText = newDesc;
-
-    // Update label
-    let labelEl = currentCard.querySelector(".label");
-    if(labelEl) labelEl.remove();
-    if(newLabel){
-      const l = document.createElement("span");
-      l.className = `label ${newLabel}`;
-      l.innerText = newLabel;
-      currentCard.insertBefore(l, currentCard.querySelector(".card-title"));
-    }
-
-    // Update edit history
-    const hist = JSON.parse(currentCard.dataset.history || "[]");
-    const timestamp = new Date().toLocaleString();
-    hist.push(`${timestamp}: "${oldTitle}"->"${newTitle}", "${oldDesc}"->"${newDesc}", label "${oldLabel}"->"${newLabel}"`);
-    currentCard.dataset.history = JSON.stringify(hist);
-
-    modal.style.display = "none";
-    saveBoard();
-  };
-
-  modalArchive.onclick = ()=>{
-    archiveCard(currentCard);
-    modal.style.display = "none";
-  };
-
-  modalDelete.onclick = ()=>{
-    if(confirm("Delete permanently?")){ currentCard.remove(); modal.style.display="none"; saveBoard(); }
-  };
-
-  function archiveCard(card){
-    card.dataset.archived = "true";
-    card.style.display = "none";
-    saveBoard();
-    renderArchivePanel();
-  }
-
-  // Archive panel
-  openArchiveBtn.onclick = ()=>{ archivePanel.style.display="block"; renderArchivePanel(); };
-  closeArchiveBtn.onclick = ()=>{ archivePanel.style.display="none"; };
-
-  function renderArchivePanel(){
-    archivedCardsContainer.innerHTML = "";
-    document.querySelectorAll(".card").forEach(card=>{
-      if(card.dataset.archived==="true"){
-        const clone = card.cloneNode(true);
-        clone.style.display="flex";
-        clone.querySelector(".card-buttons").remove();
-        const restoreBtn = document.createElement("button");
-        restoreBtn.innerText="Restore";
-        restoreBtn.onclick = ()=>{
-          card.dataset.archived="false";
-          card.style.display="flex";
-          saveBoard();
-          renderArchivePanel();
-        };
-        clone.appendChild(restoreBtn);
-        archivedCardsContainer.appendChild(clone);
-      }
-    });
-  }
-
-  // Persistence
-  function saveBoard(){
-    const data=[];
-    document.querySelectorAll(".list").forEach(l=>{
-      const listTitle = l.querySelector("h3").innerText;
-      const cardsData=[];
-      l.querySelectorAll(".card").forEach(c=>{
-        const title = c.querySelector(".card-title").innerText;
-        const desc = c.querySelector(".card-desc").innerText;
-        const label = c.querySelector(".label")?.className.split(" ")[1] || "";
-        const archived = c.dataset.archived==="true";
-        const history = JSON.parse(c.dataset.history || "[]");
-        cardsData.push({title,desc,label,archived,history});
-      });
-      data.push({listTitle,cards:cardsData});
-    });
-    localStorage.setItem("ellaBoard",JSON.stringify(data));
-  }
-
-  function loadBoard(){
-    const data = JSON.parse(localStorage.getItem("ellaBoard") || "[]");
-    data.forEach(l=>{
-      const list = createList(l.listTitle);
-      const cardsContainer = list.querySelector(".cards");
-      l.cards.forEach(c=>{
-        const card = createCard(c.title,c.desc,c.label,c.history);
-        if(c.archived){ card.dataset.archived="true"; card.style.display="none"; }
-        cardsContainer.appendChild(card);
-      });
-    });
+    card.desc = modalDesc.value;
+    card.label = modalLabel.value;
+    card.title = modalTitle.value; // optional: title editable in modal too
+    saveData();
+    renderBoard();
+    closeCardModal();
   }
 });
+
+modalArchive.addEventListener('click', ()=>{
+  if(currentEdit){
+    const {listIndex, cardIndex} = currentEdit;
+    archiveCard(listIndex, cardIndex);
+    closeCardModal();
+  }
+});
+
+modalDelete.addEventListener('click', ()=>{
+  if(currentEdit){
+    const {listIndex, cardIndex} = currentEdit;
+    deleteCard(listIndex, cardIndex);
+    closeCardModal();
+  }
+});
+
+closeModal.addEventListener('click', closeCardModal);
+window.addEventListener('click', (e)=> { if(e.target === cardModal) closeCardModal(); });
+
+// -------------------------------
+// Archive Functions
+// -------------------------------
+function archiveCard(listIndex, cardIndex){
+  const card = boardData[listIndex].cards.splice(cardIndex,1)[0];
+  archivedCards.push(card);
+  saveData();
+  renderBoard();
+  renderArchived();
+}
+
+function renderArchived(){
+  archivedCardsContainer.innerHTML = '';
+  archivedCards.forEach((card, index)=>{
+    const el = document.createElement('div');
+    el.classList.add('card');
+    el.textContent = card.title || 'Untitled';
+    archivedCardsContainer.appendChild(el);
+  });
+}
+
+openArchive.addEventListener('click', ()=> archivePanel.style.display = 'block');
+closeArchive.addEventListener('click', ()=> archivePanel.style.display = 'none');
+
+// -------------------------------
+// List Actions
+// -------------------------------
+addListBtn.addEventListener('click', ()=>{
+  const name = prompt('Enter list name:');
+  if(name){
+    boardData.push({name, cards: []});
+    saveData();
+    renderBoard();
+  }
+});
+
+function deleteList(listIndex){
+  if(confirm('Delete this list?')){
+    boardData.splice(listIndex,1);
+    saveData();
+    renderBoard();
+  }
+}
+
+// -------------------------------
+// Initial Render
+// -------------------------------
+renderBoard();
+renderArchived();
