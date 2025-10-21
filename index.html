@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Board</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>My Board</h1>
+  <div class="board" id="board">
+    <div class="list" id="todo">
+      <h3>To Do</h3>
+      <div class="cards"></div>
+      <button onclick="addCard('todo')">Add Card</button>
+    </div>
+    <div class="list" id="inprogress">
+      <h3>In Progress</h3>
+      <div class="cards"></div>
+      <button onclick="addCard('inprogress')">Add Card</button>
+    </div>
+    <div class="list" id="done">
+      <h3>Done</h3>
+      <div class="cards"></div>
+      <button onclick="addCard('done')">Add Card</button>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
