@@ -1,118 +1,116 @@
-function addCard(listId) {
-  const title = prompt("Enter card title:");
-  if (!title) return;
-
-  const description = prompt("Enter card description (optional):") || "";
-
-  const labelColor = prompt(
-    "Choose label color: red, green, blue, yellow, purple (optional):"
-  ) || "";
-
-  const card = createCardElement(title, description, labelColor.toLowerCase());
-  document.querySelector(`#${listId} .cards`).appendChild(card);
-  saveBoard();
+body {
+  font-family: Arial, sans-serif;
+  background: #0079bf;
+  margin: 0;
+  padding: 20px;
+  color: #333;
 }
 
-function createCardElement(title, description, labelColor = "") {
-  const card = document.createElement("div");
-  card.className = "card";
-
-  const cardTitle = document.createElement("strong");
-  cardTitle.innerText = title;
-
-  const cardDesc = document.createElement("p");
-  cardDesc.innerText = description;
-
-  // Label element
-  let label = null;
-  if (["red", "green", "blue", "yellow", "purple"].includes(labelColor)) {
-    label = document.createElement("span");
-    label.className = `label ${labelColor}`;
-    label.innerText = labelColor;
-  }
-
-  const buttons = document.createElement("div");
-  buttons.className = "card-buttons";
-
-  const editBtn = document.createElement("button");
-  editBtn.innerText = "Edit";
-  editBtn.onclick = () => {
-    const newTitle = prompt("Edit title:", cardTitle.innerText);
-    if (newTitle) cardTitle.innerText = newTitle;
-
-    const newDesc = prompt("Edit description:", cardDesc.innerText);
-    if (newDesc !== null) cardDesc.innerText = newDesc;
-
-    const newLabelColor = prompt(
-      "Edit label color: red, green, blue, yellow, purple (optional):",
-      labelColor
-    ) || "";
-
-    if (label) label.remove();
-    if (["red","green","blue","yellow","purple"].includes(newLabelColor.toLowerCase())) {
-      const newLabel = document.createElement("span");
-      newLabel.className = `label ${newLabelColor.toLowerCase()}`;
-      newLabel.innerText = newLabelColor.toLowerCase();
-      card.insertBefore(newLabel, cardTitle);
-    }
-
-    saveBoard();
-  };
-
-  const deleteBtn = document.createElement("button");
-  deleteBtn.innerText = "Delete";
-  deleteBtn.onclick = () => {
-    if (confirm("Delete this card?")) {
-      card.remove();
-      saveBoard();
-    }
-  };
-
-  buttons.appendChild(editBtn);
-  buttons.appendChild(deleteBtn);
-
-  if (label) card.appendChild(label);
-  card.appendChild(cardTitle);
-  card.appendChild(cardDesc);
-  card.appendChild(buttons);
-
-  return card;
+h1 {
+  text-align: center;
+  color: white;
+  margin-bottom: 20px;
 }
 
-function saveBoard() {
-  const boardData = {};
-  document.querySelectorAll(".list").forEach(list => {
-    const listId = list.id;
-    boardData[listId] = [];
-    list.querySelectorAll(".card").forEach(card => {
-      const title = card.querySelector("strong").innerText;
-      const description = card.querySelector("p").innerText;
-      const labelEl = card.querySelector(".label");
-      const label = labelEl ? labelEl.className.split(" ")[1] : "";
-      boardData[listId].push({ title, description, label });
-    });
-  });
-  localStorage.setItem("boardData", JSON.stringify(boardData));
+#board-container {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  overflow-x: auto;
+  padding-bottom: 20px;
 }
 
-function loadBoard() {
-  const boardData = JSON.parse(localStorage.getItem("boardData") || "{}");
-  for (let listId in boardData) {
-    const listContainer = document.querySelector(`#${listId} .cards`);
-    boardData[listId].forEach(cardData => {
-      const card = createCardElement(cardData.title, cardData.description, cardData.label);
-      listContainer.appendChild(card);
-    });
-  }
+.list {
+  background: #ebecf0;
+  width: 250px;
+  min-width: 250px;
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  display: flex;
+  flex-direction: column;
 }
 
-// Enable drag-and-drop
-document.querySelectorAll(".cards").forEach(el => {
-  new Sortable(el, {
-    group: "shared",
-    animation: 150,
-    onEnd: saveBoard
-  });
-});
+.list h3 {
+  margin: 0 0 10px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 
-loadBoard();
+.cards {
+  min-height: 20px;
+  flex-grow: 1;
+}
+
+.card {
+  background: #fff;
+  border-radius: 3px;
+  padding: 8px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+}
+
+.card:hover {
+  background: #f4f5f7;
+}
+
+.card-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 5px;
+  margin-top: 5px;
+}
+
+.card-buttons button {
+  font-size: 11px;
+  padding: 2px 5px;
+  cursor: pointer;
+}
+
+.label {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 10px;
+  color: white;
+  margin-bottom: 5px;
+}
+
+.label.red { background-color: #e74c3c; }
+.label.green { background-color: #2ecc71; }
+.label.blue { background-color: #3498db; }
+.label.yellow { background-color: #f1c40f; color: #333; }
+.label.purple { background-color: #9b59b6; }
+
+button#add-list-btn {
+  padding: 10px 15px;
+  background: #5aac44;
+  color: white;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+button#add-list-btn:hover {
+  background: #519839;
+}
+
+input, textarea, select {
+  width: 100%;
+  margin-bottom: 5px;
+  padding: 5px;
+  border-radius: 3px;
+  border: 1px solid #ccc;
+}
+
+select.label-picker {
+  margin-bottom: 5px;
+  padding: 3px;
+  border-radius: 3px;
+  width: 100%;
+  border: 1px solid #ccc;
+}
