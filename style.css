@@ -1,4 +1,6 @@
-/* Reset */
+/* ----------------------------
+   Reset & Base
+---------------------------- */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'Poppins', sans-serif;
@@ -8,7 +10,9 @@ body {
   overflow-x: hidden;
 }
 
-/* Header */
+/* ----------------------------
+   Header
+---------------------------- */
 header {
   display: flex;
   justify-content: space-between;
@@ -37,7 +41,9 @@ header button {
 }
 header button:hover { background: #519839; }
 
-/* Board container */
+/* ----------------------------
+   Board Container
+---------------------------- */
 #board-container {
   display: flex;
   gap: 20px;
@@ -47,7 +53,9 @@ header button:hover { background: #519839; }
   align-items: flex-start;
 }
 
-/* List */
+/* ----------------------------
+   List
+---------------------------- */
 .list {
   background: rgba(255,255,255,0.95);
   min-width: 280px;
@@ -66,7 +74,18 @@ header button:hover { background: #519839; }
   align-items: center;
   margin-bottom: 10px;
 }
-.list-header h3 { font-size: 1.2rem; color: #333; }
+.list-header h3 {
+  font-size: 1.2rem;
+  color: #333;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+.list-header h3:focus {
+  outline: none;
+  background: rgba(0,0,0,0.05);
+}
+
 .list-header button {
   background: none;
   border: none;
@@ -85,7 +104,9 @@ header button:hover { background: #519839; }
   font-size: 0.9rem;
 }
 
-/* Card */
+/* ----------------------------
+   Card
+---------------------------- */
 .card {
   background: #fff;
   border-radius: 10px;
@@ -113,7 +134,6 @@ header button:hover { background: #519839; }
   margin-bottom: 5px;
 }
 
-/* Card label badge */
 .label {
   display: inline-block;
   padding: 3px 8px;
@@ -146,15 +166,15 @@ header button:hover { background: #519839; }
   transition: 0.2s;
 }
 
-.card-buttons button:hover {
-  opacity: 0.8;
-}
+.card-buttons button:hover { opacity: 0.8; }
 
 .card-buttons button:nth-child(1) { background: #3498db; color:#fff; } /* Edit */
 .card-buttons button:nth-child(2) { background: #f39c12; color:#fff; } /* Archive */
 .card-buttons button:nth-child(3) { background: #e74c3c; color:#fff; } /* Delete */
 
-/* Modal */
+/* ----------------------------
+   Modal
+---------------------------- */
 .modal {
   display: none;
   position: fixed;
@@ -176,6 +196,7 @@ header button:hover { background: #519839; }
   flex-direction: column;
   gap:10px;
   position: relative;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
 .modal-content input, .modal-content textarea, .modal-content select {
@@ -186,7 +207,7 @@ header button:hover { background: #519839; }
   width: 100%;
 }
 
-.modal-content textarea { resize: vertical; }
+.modal-content textarea { resize: vertical; min-height: 60px; }
 
 .modal-buttons {
   display: flex;
@@ -202,6 +223,7 @@ header button:hover { background: #519839; }
   cursor: pointer;
   font-weight: 600;
   color: #fff;
+  transition: 0.2s;
 }
 
 #modal-save { background: #5aac44; }
@@ -216,22 +238,28 @@ header button:hover { background: #519839; }
   color:#333;
 }
 
-/* Archive Panel */
+/* ----------------------------
+   Archive Panel
+---------------------------- */
 #archive-panel {
   display: none;
   position: fixed;
-  right:0; top:0;
-  width: 300px;
-  height: 100%;
+  right:20px; top:70px;
+  width: 280px;
+  max-height: 70%;
   background: #f4f4f4;
   padding: 15px;
   overflow-y: auto;
-  box-shadow: -2px 0 10px rgba(0,0,0,0.3);
+  box-shadow: 0 5px 20px rgba(0,0,0,0.4);
+  border-radius: 12px;
   z-index: 1001;
+  transition: transform 0.3s ease;
 }
 
 #archive-panel h2 {
   margin-bottom: 10px;
+  font-size: 1.2rem;
+  color: #333;
 }
 
 #archive-panel button {
@@ -241,6 +269,7 @@ header button:hover { background: #519839; }
   border:none;
   font-size: 1.5rem;
   cursor:pointer;
+  color: #e74c3c;
 }
 
 #archived-cards {
@@ -254,7 +283,7 @@ header button:hover { background: #519839; }
   position: fixed;
   right:20px;
   bottom:20px;
-  padding: 10px 15px;
+  padding: 12px 16px;
   border:none;
   border-radius:6px;
   background:#3498db;
@@ -262,10 +291,15 @@ header button:hover { background: #519839; }
   cursor:pointer;
   z-index:999;
   font-weight:600;
+  transition: 0.2s;
 }
+#open-archive:hover { background:#2980b9; }
 
-/* Responsive */
+/* ----------------------------
+   Responsive
+---------------------------- */
 @media (max-width:768px){
   #board-container { flex-direction: column; height:auto; }
   .list { min-width: 90%; }
+  #archive-panel { width: 90%; right:5%; top:50px; }
 }
