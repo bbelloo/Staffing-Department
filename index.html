@@ -15,15 +15,23 @@
     <button id="add-list-btn">+ Add List</button>
   </header>
 
-  <main id="board-container"></main>
+  <main id="board-container" role="main"></main>
 
-  <div class="modal" id="card-modal">
+  <div class="modal" id="card-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-desc" tabindex="-1">
     <div class="modal-content">
-      <span id="close-modal">&times;</span>
+      <button id="close-modal" class="modal-close" aria-label="Close modal">&times;</button>
+
+      <label class="sr-only" for="modal-title">Card Title</label>
       <input type="text" id="modal-title" placeholder="Card Title">
+
+      <label class="sr-only" for="modal-desc">Card Description</label>
       <textarea id="modal-desc" placeholder="Card Description"></textarea>
+
+      <label class="sr-only" for="modal-label">Card Label</label>
       <input type="text" id="modal-label" placeholder="Label (e.g., red, green, blue)">
-      <ul id="history-list"></ul>
+
+      <ul id="history-list" aria-live="polite"></ul>
+
       <div class="modal-buttons">
         <button id="modal-save">Save</button>
         <button id="modal-archive">Archive</button>
@@ -32,12 +40,12 @@
     </div>
   </div>
 
-  <div id="archive-panel">
+  <div id="archive-panel" aria-hidden="true">
     <h2>Archived Cards</h2>
-    <button id="close-archive">&times;</button>
+    <button id="close-archive" aria-label="Close archive panel">&times;</button>
     <div id="archived-cards"></div>
   </div>
 
-  <button id="open-archive">📦 Archive</button>
+  <button id="open-archive" aria-controls="archive-panel">📦 Archive</button>
 </body>
 </html>
