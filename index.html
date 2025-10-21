@@ -1,19 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Trello-Style Board</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ultra Trello Board</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h1>Trello-Style Board</h1>
-  <div id="board-container">
-    <button id="add-list-btn">+ Add List</button>
-  </div>
+<header>
+  <h1>Ultra Trello Board</h1>
+  <button id="add-list-btn">+ Add List</button>
+</header>
+<main id="board-container"></main>
 
-  <!-- SortableJS for drag-and-drop -->
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-  <script src="script.js"></script>
+<!-- Modal for card editing -->
+<div id="card-modal" class="modal">
+  <div class="modal-content">
+    <span id="close-modal">&times;</span>
+    <input id="modal-title" placeholder="Card Title">
+    <textarea id="modal-desc" placeholder="Card Description"></textarea>
+    <select id="modal-label">
+      <option value="">No label</option>
+      <option value="red">Red</option>
+      <option value="green">Green</option>
+      <option value="blue">Blue</option>
+      <option value="yellow">Yellow</option>
+      <option value="purple">Purple</option>
+    </select>
+    <div class="modal-buttons">
+      <button id="modal-archive">Archive</button>
+      <button id="modal-delete">Delete</button>
+      <button id="modal-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SortableJS for drag-and-drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
