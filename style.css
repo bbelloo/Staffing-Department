@@ -199,7 +199,7 @@ header button:hover { background: #519839; }
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
-.modal-content input, .modal-content textarea, .modal-content select {
+.modal-content input, .modal-content textarea {
   padding: 8px;
   border-radius: 6px;
   border: 1px solid #ccc;
@@ -253,14 +253,9 @@ header button:hover { background: #519839; }
   box-shadow: 0 5px 20px rgba(0,0,0,0.4);
   border-radius: 12px;
   z-index: 1001;
-  transition: transform 0.3s ease;
 }
 
-#archive-panel h2 {
-  margin-bottom: 10px;
-  font-size: 1.2rem;
-  color: #333;
-}
+#archive-panel h2 { margin-bottom: 10px; font-size: 1.2rem; color: #333; }
 
 #archive-panel button {
   position: absolute;
