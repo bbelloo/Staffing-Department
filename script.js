@@ -11,159 +11,289 @@ document.addEventListener("DOMContentLoaded", () => {
   const modalArchive = document.getElementById("modal-archive");
   const modalDelete = document.getElementById("modal-delete");
   const modalSave = document.getElementById("modal-save");
+  const historyList = document.getElementById("history-list");
   let currentCard = null;
 
+  // Archive Panel
+  const archivePanel = document.getElementById("archive-panel");
+  const openArchiveBtn = document.getElementById("open-archive");
+  const closeArchiveBtn = document.getElementById("close-archive");
+  const archivedCardsContainer = document.getElementById("archived-cards");
+
+  // Load board from localStorage
   loadBoard();
 
+  // Add new list
   addListBtn.addEventListener("click", () => {
-    const name = prompt("List name:");
-    if (!name) return;
-    const list = createList(name);
-    boardContainer.appendChild(list);
+    createList();
     saveBoard();
   });
 
-  function createList(title) {
+  // Functions
+  function createList(title = "New List") {
     const list = document.createElement("div");
     list.className = "list";
 
+    // Header
     const header = document.createElement("div");
     header.className = "list-header";
 
-    const h3 = document.createElement("h3"); h3.innerText = title;
-    const delBtn = document.createElement("button"); delBtn.innerText = "×";
-    delBtn.onclick = () => { if(confirm("Delete list?")) { list.remove(); saveBoard(); } };
-    
-    const showArchivedBtn = document.createElement("button");
-    showArchivedBtn.innerText = "Show Archived";
-    let showingArchived = false;
-    showArchivedBtn.onclick = () => {
-      showingArchived = !showingArchived;
-      list.querySelectorAll(".card").forEach(card=>{
-        if(card.dataset.archived==="true"){
-          card.style.display = showingArchived ? "flex" : "none";
-        }
-      });
-      showArchivedBtn.innerText = showingArchived ? "Hide Archived" : "Show Archived";
+    const h3 = document.createElement("h3");
+    h3.innerText = title;
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.innerText = "×";
+    deleteBtn.onclick = () => {
+      if (confirm("Delete this list?")) {
+        list.remove();
+        saveBoard();
+      }
     };
 
-    header.append(h3, delBtn, showArchivedBtn);
+    header.append(h3, deleteBtn);
     list.appendChild(header);
 
-    const cards = document.createElement("div"); cards.className="cards";
-    list.appendChild(cards);
+    // Cards container
+    const cardsContainer = document.createElement("div");
+    cardsContainer.className = "cards";
+    list.appendChild(cardsContainer);
 
-    const input = document.createElement("input");
-    input.placeholder="+ Add a card..."; input.className="add-card-input";
-    input.addEventListener("keypress", e => {
-      if(e.key==="Enter" && input.value.trim()!==""){
-        const card=createCard(input.value.trim());
-        cards.appendChild(card); input.value="";
+    // Inline add card input
+    const addCardInput = document.createElement("input");
+    addCardInput.className = "add-card-input";
+    addCardInput.placeholder = "+ Add a card...";
+    addCardInput.addEventListener("keypress", (e) => {
+      if (e.key === "Enter" && addCardInput.value.trim() !== "") {
+        const card = createCard(addCardInput.value.trim());
+        cardsContainer.appendChild(card);
+        addCardInput.value = "";
         saveBoard();
       }
     });
-    list.appendChild(input);
+    list.appendChild(addCardInput);
 
-    new Sortable(cards,{ group:"shared", animation:200, onEnd:saveBoard });
+    // Make cards sortable
+    new Sortable(cardsContainer, {
+      group: "shared-cards",
+      animation: 200,
+      onEnd: saveBoard
+    });
+
+    // Add list to board
+    boardContainer.appendChild(list);
+
+    // Make lists sortable horizontally
+    new Sortable(boardContainer, {
+      animation: 200,
+      onEnd: saveBoard
+    });
 
     return list;
   }
 
-  function createCard(title, desc="", labelColor=""){
-    const card = document.createElement("div"); card.className="card"; card.dataset.archived="false";
-    const cardTitle = document.createElement("div"); cardTitle.className="card-title"; cardTitle.innerText=title;
-    const cardDesc = document.createElement("div"); cardDesc.className="card-desc"; cardDesc.innerText=desc;
+  function createCard(title, desc = "", label = "", history = []) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.dataset.archived = "false";
+    card.dataset.history = JSON.stringify(history);
 
-    let label=null;
-    if(["red","green","blue","yellow","purple"].includes(labelColor)){
-      label=document.createElement("span"); label.className=`label ${labelColor}`; label.innerText=labelColor;
+    // Label badge
+    let labelBadge = null;
+    if (label) {
+      labelBadge = document.createElement("span");
+      labelBadge.className = `label ${label}`;
+      labelBadge.innerText = label;
+      card.appendChild(labelBadge);
     }
 
-    const picker=document.createElement("select"); picker.className="label-picker";
+    const cardTitle = document.createElement("div");
+    cardTitle.className = "card-title";
+    cardTitle.innerText = title;
+
+    const cardDesc = document.createElement("div");
+    cardDesc.className = "card-desc";
+    cardDesc.innerText = desc;
+
+    // Label selector inline
+    const labelSelector = document.createElement("select");
     ["","red","green","blue","yellow","purple"].forEach(c=>{
-      const opt=document.createElement("option"); opt.value=c; opt.innerText=c===""?"No label":c;
-      if(c===labelColor) opt.selected=true; picker.appendChild(opt);
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.innerText = c === "" ? "No label" : c;
+      if (c === label) opt.selected = true;
+      labelSelector.appendChild(opt);
     });
-    picker.addEventListener("change", ()=>{
-      if(label) label.remove();
-      if(picker.value){ const l=document.createElement("span"); l.className=`label ${picker.value}`; l.innerText=picker.value; card.insertBefore(l, cardTitle); label=l; } else label=null;
+    labelSelector.addEventListener("change", ()=>{
+      if(labelBadge) labelBadge.remove();
+      if(labelSelector.value){
+        labelBadge = document.createElement("span");
+        labelBadge.className = `label ${labelSelector.value}`;
+        labelBadge.innerText = labelSelector.value;
+        card.insertBefore(labelBadge, cardTitle);
+      } else {
+        labelBadge = null;
+      }
       saveBoard();
     });
 
-    const buttons=document.createElement("div"); buttons.className="card-buttons";
-    const edit=document.createElement("button"); edit.innerText="Edit";
-    edit.onclick=()=>openModal(card);
-    const archive=document.createElement("button"); archive.innerText="Archive";
-    archive.onclick=()=>{ card.style.display="none"; card.dataset.archived="true"; saveBoard(); };
-    const del=document.createElement("button"); del.innerText="Delete";
-    del.onclick=()=>{ if(confirm("Delete permanently?")){ card.remove(); saveBoard(); } };
-    buttons.append(edit,archive,del);
+    // Card buttons
+    const buttons = document.createElement("div");
+    buttons.className = "card-buttons";
+    const editBtn = document.createElement("button"); editBtn.innerText="Edit";
+    const archiveBtn = document.createElement("button"); archiveBtn.innerText="Archive";
+    const deleteBtn = document.createElement("button"); deleteBtn.innerText="Delete";
 
-    if(label) card.appendChild(label);
-    card.append(cardTitle,cardDesc,picker,buttons);
+    editBtn.onclick = (e)=>{
+      e.stopPropagation();
+      openModal(card);
+    };
+    archiveBtn.onclick = (e)=>{
+      e.stopPropagation();
+      archiveCard(card);
+    };
+    deleteBtn.onclick = (e)=>{
+      e.stopPropagation();
+      if(confirm("Delete permanently?")){ card.remove(); saveBoard(); }
+    };
 
-    attachModal(card);
+    buttons.append(editBtn, archiveBtn, deleteBtn);
+
+    card.append(labelBadge, cardTitle, cardDesc, labelSelector, buttons);
+
+    // Click card to open modal
+    card.addEventListener("click", (e)=>{
+      if(!e.target.closest("button") && !e.target.closest("select")){
+        openModal(card);
+      }
+    });
+
     return card;
   }
 
-  function attachModal(card){
-    card.onclick=e=>{
-      if(!e.target.closest("button") && !e.target.closest("select")) openModal(card);
-    };
-  }
-
+  // Modal functions
   function openModal(card){
-    currentCard=card; modal.style.display="flex";
-    modalTitle.value=card.querySelector(".card-title").innerText;
-    modalDesc.value=card.querySelector(".card-desc").innerText;
-    const labelEl=card.querySelector(".label");
+    currentCard = card;
+    modal.style.display = "flex";
+    modalTitle.value = card.querySelector(".card-title").innerText;
+    modalDesc.value = card.querySelector(".card-desc").innerText;
+    const labelEl = card.querySelector(".label");
     modalLabel.value = labelEl ? labelEl.className.split(" ")[1] : "";
+
+    // Load edit history
+    historyList.innerHTML = "";
+    const hist = JSON.parse(card.dataset.history || "[]");
+    hist.forEach(entry=>{
+      const li = document.createElement("li");
+      li.innerText = entry;
+      historyList.appendChild(li);
+    });
   }
 
-  closeModal.onclick = ()=> modal.style.display="none";
+  closeModal.onclick = ()=>{ modal.style.display="none"; };
   window.onclick = e=>{ if(e.target===modal) modal.style.display="none"; };
 
   modalSave.onclick = ()=>{
-    currentCard.querySelector(".card-title").innerText=modalTitle.value;
-    currentCard.querySelector(".card-desc").innerText=modalDesc.value;
-    let labelEl=currentCard.querySelector(".label"); if(labelEl) labelEl.remove();
-    if(modalLabel.value){ const l=document.createElement("span"); l.className=`label ${modalLabel.value}`; l.innerText=modalLabel.value; currentCard.insertBefore(l,currentCard.querySelector(".card-title")); }
-    saveBoard(); modal.style.display="none";
-  };
-  modalArchive.onclick=()=>{
-    currentCard.style.display="none"; currentCard.dataset.archived="true"; saveBoard(); modal.style.display="none";
-  };
-  modalDelete.onclick=()=>{
-    if(confirm("Delete permanently?")){ currentCard.remove(); saveBoard(); modal.style.display="none"; }
+    const oldTitle = currentCard.querySelector(".card-title").innerText;
+    const oldDesc = currentCard.querySelector(".card-desc").innerText;
+    const oldLabel = currentCard.querySelector(".label")?.className.split(" ")[1] || "";
+
+    const newTitle = modalTitle.value;
+    const newDesc = modalDesc.value;
+    const newLabel = modalLabel.value;
+
+    // Update card content
+    currentCard.querySelector(".card-title").innerText = newTitle;
+    currentCard.querySelector(".card-desc").innerText = newDesc;
+
+    // Update label
+    let labelEl = currentCard.querySelector(".label");
+    if(labelEl) labelEl.remove();
+    if(newLabel){
+      const l = document.createElement("span");
+      l.className = `label ${newLabel}`;
+      l.innerText = newLabel;
+      currentCard.insertBefore(l, currentCard.querySelector(".card-title"));
+    }
+
+    // Update edit history
+    const hist = JSON.parse(currentCard.dataset.history || "[]");
+    const timestamp = new Date().toLocaleString();
+    hist.push(`${timestamp}: "${oldTitle}"->"${newTitle}", "${oldDesc}"->"${newDesc}", label "${oldLabel}"->"${newLabel}"`);
+    currentCard.dataset.history = JSON.stringify(hist);
+
+    modal.style.display = "none";
+    saveBoard();
   };
 
+  modalArchive.onclick = ()=>{
+    archiveCard(currentCard);
+    modal.style.display = "none";
+  };
+
+  modalDelete.onclick = ()=>{
+    if(confirm("Delete permanently?")){ currentCard.remove(); modal.style.display="none"; saveBoard(); }
+  };
+
+  function archiveCard(card){
+    card.dataset.archived = "true";
+    card.style.display = "none";
+    saveBoard();
+    renderArchivePanel();
+  }
+
+  // Archive panel
+  openArchiveBtn.onclick = ()=>{ archivePanel.style.display="block"; renderArchivePanel(); };
+  closeArchiveBtn.onclick = ()=>{ archivePanel.style.display="none"; };
+
+  function renderArchivePanel(){
+    archivedCardsContainer.innerHTML = "";
+    document.querySelectorAll(".card").forEach(card=>{
+      if(card.dataset.archived==="true"){
+        const clone = card.cloneNode(true);
+        clone.style.display="flex";
+        clone.querySelector(".card-buttons").remove();
+        const restoreBtn = document.createElement("button");
+        restoreBtn.innerText="Restore";
+        restoreBtn.onclick = ()=>{
+          card.dataset.archived="false";
+          card.style.display="flex";
+          saveBoard();
+          renderArchivePanel();
+        };
+        clone.appendChild(restoreBtn);
+        archivedCardsContainer.appendChild(clone);
+      }
+    });
+  }
+
+  // Persistence
   function saveBoard(){
     const data=[];
     document.querySelectorAll(".list").forEach(l=>{
-      const listTitle=l.querySelector("h3").innerText;
+      const listTitle = l.querySelector("h3").innerText;
       const cardsData=[];
       l.querySelectorAll(".card").forEach(c=>{
-        const title=c.querySelector(".card-title").innerText;
-        const desc=c.querySelector(".card-desc").innerText;
-        const labelEl=c.querySelector(".label");
-        const label=labelEl?labelEl.className.split(" ")[1]:"";
-        const archived=c.dataset.archived==="true";
-        cardsData.push({title,desc,label,archived});
+        const title = c.querySelector(".card-title").innerText;
+        const desc = c.querySelector(".card-desc").innerText;
+        const label = c.querySelector(".label")?.className.split(" ")[1] || "";
+        const archived = c.dataset.archived==="true";
+        const history = JSON.parse(c.dataset.history || "[]");
+        cardsData.push({title,desc,label,archived,history});
       });
       data.push({listTitle,cards:cardsData});
     });
-    localStorage.setItem("ultraBoard",JSON.stringify(data));
+    localStorage.setItem("ellaBoard",JSON.stringify(data));
   }
 
   function loadBoard(){
-    const data=JSON.parse(localStorage.getItem("ultraBoard")||"[]");
+    const data = JSON.parse(localStorage.getItem("ellaBoard") || "[]");
     data.forEach(l=>{
-      const list=createList(l.listTitle);
-      boardContainer.appendChild(list);
+      const list = createList(l.listTitle);
+      const cardsContainer = list.querySelector(".cards");
       l.cards.forEach(c=>{
-        const card=createCard(c.title,c.desc,c.label);
-        if(c.archived){ card.style.display="none"; card.dataset.archived="true"; }
-        list.querySelector(".cards").appendChild(card);
+        const card = createCard(c.title,c.desc,c.label,c.history);
+        if(c.archived){ card.dataset.archived="true"; card.style.display="none"; }
+        cardsContainer.appendChild(card);
       });
     });
   }
