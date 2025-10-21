@@ -1,5 +1,6 @@
 // -------------------------------
 // Ella's Last Brain Cell - Script
+// Single Global Board Version
 // -------------------------------
 
 // DOM Elements
@@ -19,81 +20,44 @@ const openArchive = document.getElementById('open-archive');
 const closeArchive = document.getElementById('close-archive');
 const archivedCardsContainer = document.getElementById('archived-cards');
 
+// -------------------------------
 // Data
+// -------------------------------
 let boardData = JSON.parse(localStorage.getItem('boardData')) || [];
+boardData = boardData.map(list => ({
+  name: list.name || 'Untitled List',
+  cards: Array.isArray(list.cards) ? list.cards : []
+}));
+
 let archivedCards = JSON.parse(localStorage.getItem('archivedCards')) || [];
-let currentEdit = null; // {listIndex, cardIndex}
+let currentEdit = null;
 
 // -------------------------------
-// Utility Functions
+// Save Data
 // -------------------------------
 function saveData() {
   localStorage.setItem('boardData', JSON.stringify(boardData));
   localStorage.setItem('archivedCards', JSON.stringify(archivedCards));
 }
 
-function createCardElement(card, listIndex, cardIndex) {
-  const cardEl = document.createElement('div');
-  cardEl.classList.add('card');
-
-  // Title
-  const titleEl = document.createElement('div');
-  titleEl.classList.add('card-title');
-  titleEl.textContent = card.title || 'Untitled Card';
-  cardEl.appendChild(titleEl);
-
-  // Label
-  if(card.label){
-    const labelEl = document.createElement('div');
-    labelEl.classList.add('label', card.label);
-    labelEl.textContent = card.label;
-    cardEl.appendChild(labelEl);
-  }
-
-  // Hover preview for description
-  if(card.desc){
-    const descEl = document.createElement('div');
-    descEl.classList.add('card-desc');
-    descEl.textContent = card.desc;
-    cardEl.appendChild(descEl);
-  }
-
-  // Card Buttons
-  const btnContainer = document.createElement('div');
-  btnContainer.classList.add('card-buttons');
-
-  const editBtn = document.createElement('button');
-  editBtn.textContent = 'Edit';
-  editBtn.addEventListener('click', () => openCardModal(listIndex, cardIndex));
-
-  const archiveBtn = document.createElement('button');
-  archiveBtn.textContent = 'Archive';
-  archiveBtn.addEventListener('click', () => archiveCard(listIndex, cardIndex));
-
-  const deleteBtn = document.createElement('button');
-  deleteBtn.textContent = 'Delete';
-  deleteBtn.addEventListener('click', () => deleteCard(listIndex, cardIndex));
-
-  btnContainer.append(editBtn, archiveBtn, deleteBtn);
-  cardEl.appendChild(btnContainer);
-
-  return cardEl;
-}
-
+// -------------------------------
+// Render Board
+// -------------------------------
 function renderBoard() {
   boardContainer.innerHTML = '';
+
   boardData.forEach((list, listIndex) => {
     const listEl = document.createElement('div');
     listEl.classList.add('list');
 
-    // List Header (editable)
+    // Header
     const header = document.createElement('div');
     header.classList.add('list-header');
     const titleEl = document.createElement('h3');
-    titleEl.textContent = list.name || 'Untitled List';
+    titleEl.textContent = list.name;
     titleEl.contentEditable = true;
     titleEl.addEventListener('blur', () => {
-      list.name = titleEl.textContent.trim();
+      list.name = titleEl.textContent.trim() || 'Untitled List';
       saveData();
     });
     header.appendChild(titleEl);
@@ -102,15 +66,15 @@ function renderBoard() {
     deleteListBtn.textContent = '×';
     deleteListBtn.addEventListener('click', () => deleteList(listIndex));
     header.appendChild(deleteListBtn);
-
     listEl.appendChild(header);
 
-    // Cards
+    // Cards Container
     const cardsEl = document.createElement('div');
     cardsEl.classList.add('cards');
     list.cards.forEach((card, cardIndex) => {
       cardsEl.appendChild(createCardElement(card, listIndex, cardIndex));
     });
+    listEl.appendChild(cardsEl);
 
     // Add Card Input
     const addCardInput = document.createElement('input');
@@ -124,14 +88,11 @@ function renderBoard() {
         renderBoard();
       }
     });
-
-    listEl.appendChild(cardsEl);
     listEl.appendChild(addCardInput);
 
-    // Append list
     boardContainer.appendChild(listEl);
 
-    // Make cards sortable
+    // Drag-and-drop cards
     new Sortable(cardsEl, {
       group: 'shared',
       animation: 150,
@@ -139,7 +100,7 @@ function renderBoard() {
     });
   });
 
-  // Make lists sortable
+  // Drag-and-drop lists
   new Sortable(boardContainer, {
     animation: 150,
     onEnd: saveData
@@ -147,7 +108,54 @@ function renderBoard() {
 }
 
 // -------------------------------
-// Card Modal
+// Card Functions
+// -------------------------------
+function createCardElement(card, listIndex, cardIndex) {
+  const cardEl = document.createElement('div');
+  cardEl.classList.add('card');
+
+  const titleEl = document.createElement('div');
+  titleEl.classList.add('card-title');
+  titleEl.textContent = card.title || 'Untitled Card';
+  cardEl.appendChild(titleEl);
+
+  if(card.label){
+    const labelEl = document.createElement('div');
+    labelEl.classList.add('label', card.label);
+    labelEl.textContent = card.label;
+    cardEl.appendChild(labelEl);
+  }
+
+  if(card.desc){
+    const descEl = document.createElement('div');
+    descEl.classList.add('card-desc');
+    descEl.textContent = card.desc;
+    cardEl.appendChild(descEl);
+  }
+
+  const btnContainer = document.createElement('div');
+  btnContainer.classList.add('card-buttons');
+
+  const editBtn = document.createElement('button');
+  editBtn.textContent = 'Edit';
+  editBtn.addEventListener('click', ()=> openCardModal(listIndex, cardIndex));
+
+  const archiveBtn = document.createElement('button');
+  archiveBtn.textContent = 'Archive';
+  archiveBtn.addEventListener('click', ()=> archiveCard(listIndex, cardIndex));
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.textContent = 'Delete';
+  deleteBtn.addEventListener('click', ()=> deleteCard(listIndex, cardIndex));
+
+  btnContainer.append(editBtn, archiveBtn, deleteBtn);
+  cardEl.appendChild(btnContainer);
+
+  return cardEl;
+}
+
+// -------------------------------
+// Modal Functions
 // -------------------------------
 function openCardModal(listIndex, cardIndex){
   currentEdit = {listIndex, cardIndex};
@@ -175,20 +183,19 @@ function renderHistory(card){
 }
 
 // -------------------------------
-// Card Actions
+// Modal Buttons
 // -------------------------------
 modalSave.addEventListener('click', ()=>{
   if(currentEdit){
     const {listIndex, cardIndex} = currentEdit;
     const card = boardData[listIndex].cards[cardIndex];
 
-    // Save only label changes and description
     if(modalDesc.value !== card.desc) card.history.push(`Desc updated: ${modalDesc.value}`);
     if(modalLabel.value !== card.label) card.history.push(`Label updated: ${modalLabel.value}`);
 
+    card.title = modalTitle.value.trim() || 'Untitled Card';
     card.desc = modalDesc.value;
     card.label = modalLabel.value;
-    card.title = modalTitle.value; // optional: title editable in modal too
     saveData();
     renderBoard();
     closeCardModal();
@@ -215,7 +222,7 @@ closeModal.addEventListener('click', closeCardModal);
 window.addEventListener('click', (e)=> { if(e.target === cardModal) closeCardModal(); });
 
 // -------------------------------
-// Archive Functions
+// Archive
 // -------------------------------
 function archiveCard(listIndex, cardIndex){
   const card = boardData[listIndex].cards.splice(cardIndex,1)[0];
@@ -227,7 +234,7 @@ function archiveCard(listIndex, cardIndex){
 
 function renderArchived(){
   archivedCardsContainer.innerHTML = '';
-  archivedCards.forEach((card, index)=>{
+  archivedCards.forEach(card=>{
     const el = document.createElement('div');
     el.classList.add('card');
     el.textContent = card.title || 'Untitled';
@@ -235,16 +242,16 @@ function renderArchived(){
   });
 }
 
-openArchive.addEventListener('click', ()=> archivePanel.style.display = 'block');
-closeArchive.addEventListener('click', ()=> archivePanel.style.display = 'none');
+openArchive.addEventListener('click', ()=> archivePanel.style.display='block');
+closeArchive.addEventListener('click', ()=> archivePanel.style.display='none');
 
 // -------------------------------
-// List Actions
+// List Functions
 // -------------------------------
 addListBtn.addEventListener('click', ()=>{
   const name = prompt('Enter list name:');
-  if(name){
-    boardData.push({name, cards: []});
+  if(name && name.trim() !== ''){
+    boardData.push({name: name.trim(), cards: []});
     saveData();
     renderBoard();
   }
