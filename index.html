@@ -11,7 +11,6 @@
 <header>
   <h1>Ella's Last Brain Cell</h1>
   <button id="add-list-btn">+ Add List</button>
-  <button id="open-archive">Show Archive</button>
 </header>
 
 <main id="board-container"></main>
@@ -23,7 +22,7 @@
     <input id="modal-title" placeholder="Card Title">
     <textarea id="modal-desc" placeholder="Card Description"></textarea>
     <select id="modal-label">
-      <option value="">No Label</option>
+      <option value="">No label</option>
       <option value="red">Red</option>
       <option value="green">Green</option>
       <option value="blue">Blue</option>
@@ -49,6 +48,123 @@
   <div id="archived-cards"></div>
 </div>
 
+<button id="open-archive">Show Archive</button>
+
+<!-- SortableJS for drag-and-drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ella's Last Brain Cell</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Ella's Last Brain Cell</h1>
+  <button id="add-list-btn">+ Add List</button>
+</header>
+
+<main id="board-container"></main>
+
+<!-- Modal for card editing -->
+<div id="card-modal" class="modal">
+  <div class="modal-content">
+    <span id="close-modal">&times;</span>
+    <input id="modal-title" placeholder="Card Title">
+    <textarea id="modal-desc" placeholder="Card Description"></textarea>
+    <select id="modal-label">
+      <option value="">No label</option>
+      <option value="red">Red</option>
+      <option value="green">Green</option>
+      <option value="blue">Blue</option>
+      <option value="yellow">Yellow</option>
+      <option value="purple">Purple</option>
+    </select>
+    <div class="modal-buttons">
+      <button id="modal-archive">Archive</button>
+      <button id="modal-delete">Delete</button>
+      <button id="modal-save">Save</button>
+    </div>
+    <div id="edit-history">
+      <h4>Edit History</h4>
+      <ul id="history-list"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- Global Archive Panel -->
+<div id="archive-panel">
+  <h2>Archived Cards</h2>
+  <button id="close-archive">×</button>
+  <div id="archived-cards"></div>
+</div>
+
+<button id="open-archive">Show Archive</button>
+
+<!-- SortableJS for drag-and-drop -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ella's Last Brain Cell</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Ella's Last Brain Cell</h1>
+  <button id="add-list-btn">+ Add List</button>
+</header>
+
+<main id="board-container"></main>
+
+<!-- Modal for card editing -->
+<div id="card-modal" class="modal">
+  <div class="modal-content">
+    <span id="close-modal">&times;</span>
+    <input id="modal-title" placeholder="Card Title">
+    <textarea id="modal-desc" placeholder="Card Description"></textarea>
+    <select id="modal-label">
+      <option value="">No label</option>
+      <option value="red">Red</option>
+      <option value="green">Green</option>
+      <option value="blue">Blue</option>
+      <option value="yellow">Yellow</option>
+      <option value="purple">Purple</option>
+    </select>
+    <div class="modal-buttons">
+      <button id="modal-archive">Archive</button>
+      <button id="modal-delete">Delete</button>
+      <button id="modal-save">Save</button>
+    </div>
+    <div id="edit-history">
+      <h4>Edit History</h4>
+      <ul id="history-list"></ul>
+    </div>
+  </div>
+</div>
+
+<!-- Global Archive Panel -->
+<div id="archive-panel">
+  <h2>Archived Cards</h2>
+  <button id="close-archive">×</button>
+  <div id="archived-cards"></div>
+</div>
+
+<button id="open-archive">Show Archive</button>
+
+<!-- SortableJS for drag-and-drop -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 <script src="script.js"></script>
 </body>
